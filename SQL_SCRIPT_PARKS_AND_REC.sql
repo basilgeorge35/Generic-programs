@@ -156,3 +156,119 @@ FROM parks_and_recreation.employee_demographics dem
 JOIN parks_and_recreation.employee_salary sal
 	ON dem.employee_id = sal.employee_id
 ;
+
+-- CTE
+WITH CTE_Example (GENDER, AVG_SALARY) AS (
+SELECT dem.gender, AVG(sal.salary)
+FROM parks_and_recreation.employee_demographics dem
+JOIN parks_and_recreation.employee_salary sal
+	ON dem.employee_id = sal.employee_id
+GROUP BY dem.gender
+)
+SELECT *
+FROM CTE_Example
+;
+
+WITH CTE_1 AS (
+SELECT employee_id, first_name, last_name, age
+FROM parks_and_recreation.employee_demographics
+WHERE age > 40
+),
+CTE_2 AS (
+SELECT employee_id, first_name, last_name, salary
+FROM parks_and_recreation.employee_salary
+WHERE salary > 50000
+)
+SELECT CTE_1.employee_id, CTE_1.first_name, CTE_1.last_name, CTE_2.salary, CTE_1.age
+FROM CTE_1
+LEFT OUTER JOIN CTE_2
+	ON CTE_1.employee_id = CTE_2.employee_id
+UNION	-- Doing full outer join using UNION
+SELECT CTE_2.employee_id, CTE_2.first_name, CTE_2.last_name, CTE_2.salary, CTE_1.age
+FROM CTE_1
+RIGHT OUTER JOIN CTE_2
+	ON CTE_1.employee_id = CTE_2.employee_id
+;
+
+
+WITH CTE_1 AS (
+SELECT employee_id, first_name, last_name, age
+FROM parks_and_recreation.employee_demographics
+WHERE age > 40
+),
+CTE_2 AS (
+SELECT employee_id, salary
+FROM parks_and_recreation.employee_salary
+WHERE salary > 50000
+)
+SELECT *
+FROM CTE_1
+JOIN CTE_2	-- Inner join
+	ON CTE_1.employee_id = CTE_2.employee_id
+;
+
+-- Temp Tables
+
+CREATE TEMPORARY TABLE temp_table
+SELECT *
+FROM parks_and_recreation.employee_salary
+WHERE salary > 50000
+;
+
+SELECT * 
+FROM temp_table;
+
+USE parks_and_recreation -- not mandatory
+DELIMITER $$
+CREATE PROCEDURE old_age()
+BEGIN
+	SELECT *
+    FROM parks_and_recreation.employee_demographics
+	WHERE age > 50;
+    SELECT *
+	FROM parks_and_recreation.employee_salary
+	WHERE salary > 50000;
+END $$
+DELIMITER ;
+
+CALL old_age();
+
+DELIMITER $$
+CREATE PROCEDURE get_details(employee_id_param INT)
+BEGIN
+	SELECT * 
+    FROM parks_and_recreation.employee_demographics
+    WHERE employee_id = employee_id_param;
+END $$
+DELIMITER ;
+
+CALL get_details(3);
+
+-- Triggers
+
+DELIMITER $$
+CREATE TRIGGER employee_update
+	AFTER INSERT ON employee_salary
+    FOR EACH ROW
+BEGIN
+	INSERT INTO employee_demographics (employee_id, first_name, last_name)
+    VALUES (NEW.employee_id, NEW.first_name, NEW.last_name);
+END $$
+DELIMITER ;
+
+INSERT INTO employee_salary (employee_id, first_name, last_name, occupation, salary, dept_id)
+VALUES(14, 'John', 'Snow', 'Team Leader', 60000, NULL);
+
+SELECT * 
+FROM employee_demographics ;
+
+DELIMITER $$
+CREATE EVENT delete_retirees
+ON SCHEDULE EVERY 1 MONTH
+DO
+BEGIN
+	DELETE
+    FROM employee_demographics
+    WHERE age > 60;
+END $$
+DELIMITER ;
