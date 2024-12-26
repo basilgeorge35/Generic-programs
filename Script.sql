@@ -160,3 +160,106 @@ UPDATE egg_production SET value = REPLACE(value, ',', '');
 UPDATE yogurt_production SET value = REPLACE(value, ',', '');
 
 SELECT * FROM yogurt_production;
+
+
+
+
+-- Find the total milk production for the year 2023.
+
+SELECT * 
+FROM milk_production
+LIMIT 5
+;
+
+SELECT mp.Year, SUM(mp.VALUE)
+FROM milk_production mp 
+WHERE mp.Year = 2023
+GROUP BY mp.Year
+;
+
+
+--Show coffee production data for the year 2015.
+--What is the total value?
+
+SELECT * 
+FROM coffee_production
+LIMIT 5
+;
+
+SELECT cp.Year, SUM(cp.VALUE)
+FROM coffee_production cp 
+WHERE cp.Year = 2015
+GROUP BY cp.Year
+;
+
+
+--Find the average honey production for the year 2022.
+
+SELECT * 
+FROM honey_production
+LIMIT 5
+;
+
+SELECT hp.Year, SUM(hp.VALUE), AVG(hp.Value)
+FROM honey_production hp 
+WHERE hp.Year = 2022
+GROUP BY hp.Year
+;
+
+
+--Get the state names with their corresponding ANSI codes from the state_lookup table.
+--What number is Iowa?
+SELECT *
+FROM state_lookup sl 
+WHERE sl.State = 'IOWA';
+
+PRAGMA table_info(state_lookup);
+
+
+--Find the highest yogurt production value for the year 2022.
+
+SELECT MAX(yp.Value)
+FROM yogurt_production yp 
+WHERE yp."Year" = 2022
+;
+
+
+--Find states where both honey and milk were produced in 2022.
+--Did State_ANSI "35" produce both honey and milk in 2022?
+
+SELECT *
+FROM honey_production hp;
+
+SELECT *
+FROM milk_production mp ;
+
+SELECT mp."Year" MP_YEAR, 
+		mp.State_ANSI MP_ANSI, 
+		hp.State_ANSI HP_ANSI,
+		hp.Value HP_VALUE, 
+		mp.Value MP_VALUE
+FROM honey_production hp 
+JOIN milk_production mp 
+	ON hp."Year" = mp."Year" AND hp.State_ANSI = mp.State_ANSI 
+WHERE hp."Year" = 2022 AND mp.State_ANSI = 35
+;
+
+
+--Find the total yogurt production for states that also produced cheese in 2022
+
+SELECT SUM(yp.Value)
+FROM yogurt_production yp 
+JOIN cheese_production cp 
+	ON yp."Year" = cp."Year" AND yp.State_ANSI = cp.State_ANSI 
+WHERE yp."Year" = 2022
+--GROUP BY yp.State_ANSI 
+;
+
+SELECT SUM(y.Value)
+FROM yogurt_production y
+WHERE y.Year = 2022 AND y.State_ANSI IN (
+    SELECT DISTINCT c.State_ANSI FROM cheese_production c WHERE c.Year = 2022
+);
+
+PRAGMA table_info(yogurt_production);
+PRAGMA table_info(cheese_production);
