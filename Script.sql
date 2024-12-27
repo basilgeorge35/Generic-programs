@@ -263,3 +263,141 @@ WHERE y.Year = 2022 AND y.State_ANSI IN (
 
 PRAGMA table_info(yogurt_production);
 PRAGMA table_info(cheese_production);
+
+
+--Can you find out the total milk production for 2023? Your manager wants this information for the yearly report.
+--What is the total milk production for 2023?
+
+SELECT SUM(mp.Value)
+FROM milk_production mp 
+WHERE mp."Year" = 2023
+--GROUP BY mp."Year" 
+;
+
+
+--Which states had cheese production greater than 100 million in April 2023? The Cheese Department wants to focus their marketing efforts there. 
+--How many states are there?
+
+SELECT *
+FROM cheese_production cp 
+WHERE cp."Year" = 2023 AND cp.Period = 'APR'
+GROUP BY cp.State_ANSI 
+HAVING SUM(cp.Value) > 100000000
+;
+
+
+SELECT *
+FROM cheese_production cp 
+WHERE cp."Year" = 2023 AND cp.Period = 'APR' AND cp.Value > 100000000
+--GROUP BY cp.State_ANSI cp.Value) > 100000000
+;
+
+
+--Your manager wants to know how coffee production has changed over the years. 
+--What is the total value of coffee production for 2011?
+
+SELECT SUM(cp.Value)
+FROM coffee_production cp 
+WHERE cp."Year" = 2011
+;
+
+
+
+--There's a meeting with the Honey Council next week. Find the average honey production for 2022 so you're prepared.
+
+SELECT AVG(hp.Value)
+FROM honey_production hp 
+WHERE hp."Year" = 2022
+;
+
+
+--The State Relations team wants a list of all states names with their corresponding ANSI codes. Can you generate that list?
+--What is the State_ANSI code for Florida?
+
+SELECT *
+FROM state_lookup sl 
+WHERE sl.State = 'FLORIDA';
+
+
+--For a cross-commodity report, can you list all states with their cheese production values, even if they didn't produce any cheese in April of 2023?
+--What is the total for NEW JERSEY?
+
+SELECT sl.State , SUM(cp.Value) Total
+--		sl.State_ANSI , cp.State_ANSI , cp."Year" , cp.Period , cp.Value 
+FROM state_lookup sl 
+LEFT JOIN cheese_production cp 
+	ON sl.State_ANSI = cp.State_ANSI 
+WHERE sl.State = 'NEW JERSEY' AND cp."Year" = 2023 AND cp.Period = 'APR'
+--ORDER BY cp.State_ANSI 
+GROUP BY sl.State
+--HAVING Total IS NULL 
+;
+
+
+--PRAGMA table_info(cheese_production);
+--
+SELECT *
+FROM state_lookup sl 
+WHERE sl.State = 'NEW JERSEY'
+;
+
+SELECT *
+FROM cheese_production cp
+WHERE  cp.State_ANSI = 34 AND cp."Year" = 2023 AND cp.Period = 'APR'
+;
+
+--Can you find the total yogurt production for states in the year 2022 which also have cheese production data from 2023? 
+--This will help the Dairy Division in their planning.
+
+SELECT SUM(yp.Value)
+FROM yogurt_production yp 
+WHERE yp."Year" = 2022 AND yp.State_ANSI IN (
+								SELECT DISTINCT cp2.State_ANSI
+								FROM cheese_production cp2 
+								WHERE cp2.Year = 2023
+)
+;
+
+
+--List all states from state_lookup that are missing from milk_production in 2023.
+--How many states are there?
+
+SELECT COUNT(DISTINCT sl.State_ANSI)
+FROM state_lookup sl 
+WHERE sl.State_ANSI NOT IN (
+							SELECT DISTINCT mp.State_ANSI
+							FROM milk_production mp 
+							WHERE mp."Year" = 2023
+)
+;
+
+
+--List all states with their cheese production values, including states that didn't produce any cheese in April 2023.
+--Did Delaware produce any cheese in April 2023?
+
+SELECT *
+FROM state_lookup sl 
+LEFT JOIN cheese_production cp 
+	ON sl.State_ANSI = cp.State_ANSI 
+WHERE cp."Year" = 2023 AND cp.Period = 'APR' AND sl.State = 'DELAWARE'
+;
+
+
+--SELECT COUNT(cp.Value) 
+--FROM cheese_production cp 
+--GROUP BY cp."Year" , cp.Period , cp.State_ANSI 
+--HAVING COUNT(cp.Value) > 1
+
+
+--Find the average coffee production for all years where the honey production exceeded 1 million.
+
+SELECT AVG(cp.Value)
+FROM coffee_production cp 
+WHERE cp."Year" IN
+	(
+	SELECT DISTINCT hp."Year" 
+	FROM honey_production hp 
+	GROUP BY hp."Year" 
+	HAVING SUM(hp.Value) > 1000000
+	)
+;
